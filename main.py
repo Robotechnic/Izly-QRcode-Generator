@@ -13,7 +13,7 @@ Options:
 	-q CODES, --codes CODES					Number of QrCode to generate, default: 1
 	-u USERNAME, --username USERNAME 		The username of the izly account, if not specified, the script will ask for it
 	-p PASSWORD, --password PASSWORD 		The password of the izly account, if not specified, the script will ask for it
-
+	-s SIZE, --size SIZE					The size of the QrCode, default: 300
 	-o OUTPUT, --output OUTPUT 			    The output folder to save the QrCode, if not specified, the script will save it in the current folder
 """
 
@@ -121,21 +121,23 @@ def get_qrcode(credentials : dict, codes : int) -> list:
 	return baseCodes.json()
 
 @consoleStatusDecorator("Saving QrCode")
-def save_qrcode(qrcode : list, output : str, format : str):
+def save_qrcode(qrcode : list, output : str, size : int) -> None:
 	"""
 	save the qrcode to a single file, if it is a list of qrcode, it will merge them in a single image
 
 	Args:
 		qrcode (list): list of qrcode
 		output (str): output file
-		format (str): format of the output file
+		size (int): size of the qrcode
 	"""
-	image = Image.new("RGB", (len(qrcode) * 250, 250), (255, 255, 255))
+	margin = size // 8
+	marginSize = size + margin * 2
+	image = Image.new("RGB", (len(qrcode) * marginSize, marginSize), (255, 255, 255))
 	for i, qrcode in enumerate(qrcode):
 		base64Image = str(re.search(r"base64,(.*)", qrcode["Src"]).group(1))
-		image.paste(Image.open(BytesIO(base64.b64decode(base64Image))).resize((200, 200)), (25 + i * 250, 25))
+		image.paste(Image.open(BytesIO(base64.b64decode(base64Image))).resize((size, size)), (25 + i * marginSize, 25))
 	
-	image.save(output, format=format)
+	image.save(output)
 		
 
 if __name__ == "__main__":
@@ -167,19 +169,19 @@ if __name__ == "__main__":
 		default="./qrcode.png", type=str, # doesn't use argparse.FileType because some verifications are needed
 		help="The output folder to save the QrCode, if not specified, the script will save it in the current folder"
 	)
+
+	parser.add_argument(
+		"-s", "--size",
+		default=200, type=int,
+		help="The size of the QrCode, default: 200"
+	)
+
 	args = parser.parse_args()
 
 	# check if output format is valid
 	if not re.match(r".*\.(png|jpg|jpeg|gif)$", args.output):
 		print("Error: invalid output format", file=sys.stderr)
-		
-	
-	imageFormat = args.output.split(".")[-1]
-	
-	# check if path exists
-	if not os.access(os.path.dirname(args.output), os.W_OK):
-		print("Error: can't write to the output file", file=sys.stderr)
-		
+		sys.exit(1)
 	
 	if args.username is None:
 		args.username = input("Username: ")
@@ -188,4 +190,4 @@ if __name__ == "__main__":
 
 	credentials = get_credentials(*get_csrf(), args.username, args.password)
 	qrcode = get_qrcode(credentials, args.codes)
-	save_qrcode(qrcode, args.output, imageFormat)
+	save_qrcode(qrcode, args.output, size)
