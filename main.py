@@ -190,4 +190,4 @@ if __name__ == "__main__":
 
 	credentials = get_credentials(*get_csrf(), args.username, args.password)
 	qrcode = get_qrcode(credentials, args.codes)
-	save_qrcode(qrcode, args.output, size)
+	save_qrcode(qrcode, args.output, args.size)
