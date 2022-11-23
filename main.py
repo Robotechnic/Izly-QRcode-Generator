@@ -135,7 +135,7 @@ def save_qrcode(qrcode : list, output : str, size : int) -> None:
 	image = Image.new("RGB", (len(qrcode) * marginSize, marginSize), (255, 255, 255))
 	for i, qrcode in enumerate(qrcode):
 		base64Image = str(re.search(r"base64,(.*)", qrcode["Src"]).group(1))
-		image.paste(Image.open(BytesIO(base64.b64decode(base64Image))).resize((size, size)), (25 + i * marginSize, 25))
+		image.paste(Image.open(BytesIO(base64.b64decode(base64Image))).resize((size, size)), (margin + i * marginSize, margin))
 	
 	image.save(output)
 		
